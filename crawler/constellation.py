@@ -57,9 +57,9 @@ def run(parameters : list):
         paragraphs = container.find_elements(By.TAG_NAME, "p")
 
         # 只回傳文字
-        texts = [p.text.strip() for p in paragraphs if p.text.strip()]
+        result = [p.text.strip() for p in paragraphs if p.text.strip()]
 
-        return texts
+        return result
 
     except Exception as e:
         return {"error": str(e)}
