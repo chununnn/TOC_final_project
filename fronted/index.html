@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Chat UI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex justify-center py-10">
+
+  <div class="w-full max-w-xl bg-white shadow-xl rounded-xl p-6">
+    <h1 class="text-2xl font-bold mb-4 text-gray-800">Chat Demo</h1>
+
+    <!-- Display Area -->
+    <div id="chatBox" class="h-80 overflow-y-auto border rounded-lg p-4 bg-gray-50 space-y-3">
+      <!-- Messages will appear here -->
+    </div>
+
+    <!-- Input Area -->
+    <div class="mt-4 flex gap-2">
+      <input id="userInput" 
+             type="text" 
+             placeholder="Type something..." 
+             class="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
+      
+      <button onclick="sendMessage()"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        Send
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chatBox");
+    const userInput = document.getElementById("userInput");
+
+    function addMessage(text, sender) {
+      const bubble = document.createElement("div");
+      bubble.className = sender === "user" ? "text-right" : "text-left";
+
+      bubble.innerHTML = `
+        <div class="inline-block px-4 py-2 rounded-lg shadow 
+                    ${sender === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"}
+                    animate-fadeIn">
+          ${text}
+        </div>
+      `;
+
+      chatBox.appendChild(bubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      addMessage(text, "user");
+      userInput.value = "";
+
+      // 🔥 Call backend API
+      const response = await fetch("http://127.0.0.1:5000/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            text: text   // 只送使用者輸入
+        })
+    });
+
+      const data = await response.json();
+
+      // 🔥 Display crawler result
+      addMessage(data.result.join("<br>"), "bot");
+    }
+  </script>
+
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.25s ease-out;
+    }
+  </style>
+
+</body>
+</html>

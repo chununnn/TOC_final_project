@@ -27,3 +27,5 @@ result = selectWeb("name", ["王","小民"])
 print(result)
 
 ```
+py -m pip install flask
+py -m pip install flask-cors
