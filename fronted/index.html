@@ -13,18 +13,18 @@
 
     <h1 class="text-2xl font-bold mb-4 text-gray-800">算命機器人</h1>
 
-    <!-- 聊天區：可滾動 + 自動撐滿 -->
-    <div id="chatBox" class="flex-1 overflow-y-auto border rounded-lg p-3 bg-gray-50 space-y-3">
-    </div>
+    <!-- 聊天區 -->
+    <div id="chatBox" class="flex-1 overflow-y-auto border rounded-lg p-3 bg-gray-50 space-y-3"></div>
 
-    <!-- 輸入框：永遠黏在底部 -->
+    <!-- 輸入框 -->
     <div class="mt-4 flex gap-2">
       <input id="userInput"
              type="text"
              placeholder="Type something..."
              class="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
 
-      <button onclick="sendMessage()"
+      <button id="sendBtn"
+              onclick="sendMessage()"
               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
         Send
       </button>
@@ -32,10 +32,29 @@
 
   </div>
 
-  <!-- Script 放在 body 最底部 -->
   <script>
     const chatBox = document.getElementById("chatBox");
     const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    let isLoading = false;        // 是否正在查詢中
+    let isTyping = false;         // 是否正在打字動畫
+    let interruptTyping = false;  // 是否要中斷打字動畫
+
+    function lockInput() {
+      userInput.disabled = true;
+      sendBtn.disabled = true;
+      userInput.classList.add("opacity-50", "cursor-not-allowed");
+      sendBtn.classList.add("opacity-50", "cursor-not-allowed");
+    }
+
+    function unlockInput() {
+      userInput.disabled = false;
+      sendBtn.disabled = false;
+      userInput.classList.remove("opacity-50", "cursor-not-allowed");
+      sendBtn.classList.remove("opacity-50", "cursor-not-allowed");
+      userInput.focus();
+    }
 
     function addMessage(text, sender) {
       const bubble = document.createElement("div");
@@ -55,19 +74,32 @@
       return bubble;
     }
 
-    // 🔥 打字機效果
-    function typeWriterEffect(targetElement, text, speed = 30) {
-      targetElement.innerHTML = ""; // 清空
+    // 🔥 打字機效果（可被中斷 + 跳到結尾）
+    function typeWriterEffect(targetElement, text, speed = 25) {
+      isTyping = true;
+      interruptTyping = false;
 
+      targetElement.innerHTML = "";
       let i = 0;
+
       function type() {
+        if (interruptTyping) {
+          targetElement.innerHTML = text; // 直接跳到結尾
+          chatBox.scrollTop = chatBox.scrollHeight;
+          isTyping = false;
+          return;
+        }
+
         if (i < text.length) {
           targetElement.innerHTML += text[i];
           i++;
           chatBox.scrollTop = chatBox.scrollHeight;
           setTimeout(type, speed);
+        } else {
+          isTyping = false;
         }
       }
+
       type();
     }
 
@@ -75,10 +107,23 @@
       const text = userInput.value.trim();
       if (!text) return;
 
+      // 🔥 如果正在打字 → 中斷並跳到結尾
+      if (isTyping) {
+        interruptTyping = true;
+        return;
+      }
+
+      // 🔥 如果正在 loading → 不允許輸入
+      if (isLoading) return;
+
       addMessage(text, "user");
       userInput.value = "";
 
-      // 🔥 波浪 loading
+      // 🔥 鎖住輸入框（loading 中）
+      lockInput();
+      isLoading = true;
+
+      // loading 動畫
       const loadingBubble = addMessage(
         `<span class="wave">
             <span>正</span><span>在</span><span>查</span><span>詢</span><span>中</span><span>.</span><span>.</span><span>.</span>
@@ -95,19 +140,23 @@
 
         const data = await response.json();
 
-        // 移除 loading
         loadingBubble.remove();
+        isLoading = false;
 
-        // 建立空泡泡，準備打字效果
+        // 建立空泡泡
         const botBubble = addMessage("", "bot");
         const innerDiv = botBubble.querySelector("div");
 
-        // 🔥 打字效果（支援 <br>，因為我們逐字塞 innerHTML）
+        // 🔥 解鎖輸入框（開始打字動畫）
+        unlockInput();
+
+        // 🔥 打字動畫（可被中斷）
         typeWriterEffect(innerDiv, data.result.join("<br>"));
 
       } catch (err) {
-        console.error(err);
         loadingBubble.remove();
+        isLoading = false;
+        unlockInput();
         addMessage("發生錯誤，請稍後再試", "bot");
       }
     }
@@ -130,13 +179,12 @@
       animation: fadeIn 0.25s ease-out;
     }
 
-    /* 🔥 波浪跳動 + 顏色變化 */
+    /* 波浪動畫 */
     .wave span {
       display: inline-block;
       animation: wave 1.6s infinite ease-in-out, colorchange 2s infinite alternate;
     }
 
-    /* 每個字依序延遲，形成波浪 */
     .wave span:nth-child(1) { animation-delay: 0s, 0s; }
     .wave span:nth-child(2) { animation-delay: 0.1s, 0.1s; }
     .wave span:nth-child(3) { animation-delay: 0.2s, 0.2s; }
@@ -146,19 +194,17 @@
     .wave span:nth-child(7) { animation-delay: 0.6s, 0.6s; }
     .wave span:nth-child(8) { animation-delay: 0.7s, 0.7s; }
 
-    /* 🔥 跳動 + 停頓的完整週期 */
     @keyframes wave {
       0%   { transform: translateY(0); }
-      25%  { transform: translateY(-6px); }  /* 跳起來 */
-      50%  { transform: translateY(0); }     /* 回到原位 */
-      100% { transform: translateY(0); }     /* 停住不動（等待） */
+      25%  { transform: translateY(-6px); }
+      50%  { transform: translateY(0); }
+      100% { transform: translateY(0); }
     }
 
-    /* 顏色變化 */
     @keyframes colorchange {
-      0%   { color: #6b7280; }   /* gray-500 */
-      50%  { color: #3b82f6; }   /* blue-500 */
-      100% { color: #10b981; }   /* green-500 */
+      0%   { color: #6b7280; }
+      50%  { color: #3b82f6; }
+      100% { color: #10b981; }
     }
   </style>
 
