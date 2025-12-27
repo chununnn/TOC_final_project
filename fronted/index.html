@@ -6,26 +6,29 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100 flex justify-center py-4">
+<body class="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center"
+      style="background-image: url('./images/BG1.jpg');">
 
-  <!-- 白框：固定高度 + flex column -->
-  <div class="w-full max-w-xl bg-white shadow-xl rounded-xl p-4 flex flex-col h-[80vh]">
+  <!-- 玻璃感聊天框（改成黑字） -->
+  <div class="w-full max-w-xl bg-white/20 backdrop-blur-xl border border-white/30 shadow-2xl rounded-2xl p-6 flex flex-col h-[80vh] text-black">
 
-    <h1 class="text-2xl font-bold mb-4 text-gray-800">算命機器人</h1>
+    <h1 class="text-2xl font-bold mb-4 drop-shadow-lg">算命機器人</h1>
 
-    <!-- 聊天區 -->
-    <div id="chatBox" class="flex-1 overflow-y-auto border rounded-lg p-3 bg-gray-50 space-y-3"></div>
+    <!-- 聊天區（玻璃感 + 黑字） -->
+    <div id="chatBox"
+         class="flex-1 overflow-y-auto rounded-lg p-3 bg-white/10 backdrop-blur-sm border border-white/20 space-y-3 shadow-inner text-black">
+    </div>
 
-    <!-- 輸入框 -->
+    <!-- 輸入框（玻璃感 + 黑字） -->
     <div class="mt-4 flex gap-2">
       <input id="userInput"
              type="text"
              placeholder="Type something..."
-             class="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
+             class="flex-1 bg-white/30 backdrop-blur-sm border border-white/30 rounded-lg px-3 py-2 text-black placeholder-gray-600 focus:ring-2 focus:ring-blue-300 outline-none">
 
       <button id="sendBtn"
               onclick="sendMessage()"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+              class="px-4 py-2 bg-blue-500/40 backdrop-blur-sm text-black rounded-lg border border-white/30 hover:bg-blue-500/60 transition">
         Send
       </button>
     </div>
@@ -37,9 +40,9 @@
     const userInput = document.getElementById("userInput");
     const sendBtn = document.getElementById("sendBtn");
 
-    let isLoading = false;        // 是否正在查詢中
-    let isTyping = false;         // 是否正在打字動畫
-    let interruptTyping = false;  // 是否要中斷打字動畫
+    let isLoading = false;
+    let isTyping = false;
+    let interruptTyping = false;
 
     function lockInput() {
       userInput.disabled = true;
@@ -61,8 +64,10 @@
       bubble.className = sender === "user" ? "text-right" : "text-left";
 
       bubble.innerHTML = `
-        <div class="inline-block px-4 py-2 rounded-lg shadow 
-                    ${sender === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"}
+        <div class="inline-block px-4 py-2 rounded-lg shadow
+                    ${sender === "user"
+                      ? "bg-blue-300/60 backdrop-blur-sm text-black border border-white/20"
+                      : "bg-white/50 backdrop-blur-sm text-black border border-white/20"}
                     animate-fadeIn">
           ${text}
         </div>
@@ -74,7 +79,6 @@
       return bubble;
     }
 
-    // 🔥 打字機效果（可被中斷 + 跳到結尾）
     function typeWriterEffect(targetElement, text, speed = 25) {
       isTyping = true;
       interruptTyping = false;
@@ -84,7 +88,7 @@
 
       function type() {
         if (interruptTyping) {
-          targetElement.innerHTML = text; // 直接跳到結尾
+          targetElement.innerHTML = text;
           chatBox.scrollTop = chatBox.scrollHeight;
           isTyping = false;
           return;
@@ -107,23 +111,19 @@
       const text = userInput.value.trim();
       if (!text) return;
 
-      // 🔥 如果正在打字 → 中斷並跳到結尾
       if (isTyping) {
         interruptTyping = true;
         return;
       }
 
-      // 🔥 如果正在 loading → 不允許輸入
       if (isLoading) return;
 
       addMessage(text, "user");
       userInput.value = "";
 
-      // 🔥 鎖住輸入框（loading 中）
       lockInput();
       isLoading = true;
 
-      // loading 動畫
       const loadingBubble = addMessage(
         `<span class="wave">
             <span>正</span><span>在</span><span>查</span><span>詢</span><span>中</span><span>.</span><span>.</span><span>.</span>
@@ -143,14 +143,10 @@
         loadingBubble.remove();
         isLoading = false;
 
-        // 建立空泡泡
         const botBubble = addMessage("", "bot");
         const innerDiv = botBubble.querySelector("div");
 
-        // 🔥 解鎖輸入框（開始打字動畫）
         unlockInput();
-
-        // 🔥 打字動畫（可被中斷）
         typeWriterEffect(innerDiv, data.result.join("<br>"));
 
       } catch (err) {
@@ -161,42 +157,39 @@
       }
     }
 
-    // Enter 送出訊息
     userInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
         event.preventDefault();
         sendMessage();
       }
     });
+
     function showFortuneButton() {
-        const btn = document.createElement("button");
-        btn.innerText = "🥠 幸運餅乾";
-        btn.className =
-            "mt-3 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition";
+      const btn = document.createElement("button");
+      btn.innerText = "🥠 幸運餅乾";
+      btn.className =
+        "mt-3 px-4 py-2 bg-orange-300/70 backdrop-blur-sm text-black rounded-lg border border-white/30 hover:bg-orange-400/80 transition";
 
-        btn.onclick = function () {
-            // 你想要按下後送出的訊息
-            userInput.value = "給我一個幸運餅乾";
-            sendMessage();
-            btn.remove(); // 按下後移除按鈕（避免重複）
-        };
+      btn.onclick = function () {
+        userInput.value = "給我一個幸運餅乾";
+        sendMessage();
+        btn.remove();
+      };
 
-        chatBox.appendChild(btn);
-        chatBox.scrollTop = chatBox.scrollHeight;
-        }
+      chatBox.appendChild(btn);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
     window.onload = function () {
-    const introBubble = addMessage("", "bot");
-    const innerDiv = introBubble.querySelector("div");
+      const introBubble = addMessage("", "bot");
+      const innerDiv = introBubble.querySelector("div");
 
-    typeWriterEffect(innerDiv, "嗨，我是你的算命機器人！請輸入你的問題，我會盡力為你解析。", 25);
+      typeWriterEffect(innerDiv, "嗨，我是你的算命機器人！請輸入你的問題，我會盡力為你解析。", 25);
 
-    // 等打字動畫結束後顯示按鈕
-    setTimeout(() => {
+      setTimeout(() => {
         showFortuneButton();
-    }, 2000); // 依照你的打字速度調整
+      }, 2000);
     };
-
-
   </script>
 
   <style>
@@ -208,33 +201,38 @@
       animation: fadeIn 0.25s ease-out;
     }
 
+    /* 修正波浪顏色 → 更深、更明顯 */
     /* 波浪動畫 */
-    .wave span {
-      display: inline-block;
-      animation: wave 1.6s infinite ease-in-out, colorchange 2s infinite alternate;
-    }
+.wave span {
+  display: inline-block;
+  animation: wave 1.6s infinite ease-in-out, colorchange 2s infinite alternate;
+}
 
-    .wave span:nth-child(1) { animation-delay: 0s, 0s; }
-    .wave span:nth-child(2) { animation-delay: 0.1s, 0.1s; }
-    .wave span:nth-child(3) { animation-delay: 0.2s, 0.2s; }
-    .wave span:nth-child(4) { animation-delay: 0.3s, 0.3s; }
-    .wave span:nth-child(5) { animation-delay: 0.4s, 0.4s; }
-    .wave span:nth-child(6) { animation-delay: 0.5s, 0.5s; }
-    .wave span:nth-child(7) { animation-delay: 0.6s, 0.6s; }
-    .wave span:nth-child(8) { animation-delay: 0.7s, 0.7s; }
+.wave span:nth-child(1) { animation-delay: 0s, 0s; }
+.wave span:nth-child(2) { animation-delay: 0.1s, 0.1s; }
+.wave span:nth-child(3) { animation-delay: 0.2s, 0.2s; }
+.wave span:nth-child(4) { animation-delay: 0.3s, 0.3s; }
+.wave span:nth-child(5) { animation-delay: 0.4s, 0.4s; }
+.wave span:nth-child(6) { animation-delay: 0.5s, 0.5s; }
+.wave span:nth-child(7) { animation-delay: 0.6s, 0.6s; }
+.wave span:nth-child(8) { animation-delay: 0.7s, 0.7s; }
 
-    @keyframes wave {
-      0%   { transform: translateY(0); }
-      25%  { transform: translateY(-6px); }
-      50%  { transform: translateY(0); }
-      100% { transform: translateY(0); }
-    }
+@keyframes wave {
+  0%   { transform: translateY(0); }
+  25%  { transform: translateY(-6px); }
+  50%  { transform: translateY(0); }
+  81.25% { transform: translateY(0); } /* ⭐ 停頓 0.5 秒 */
+  100% { transform: translateY(0); }
+}
+
+
 
     @keyframes colorchange {
-      0%   { color: #6b7280; }
-      50%  { color: #3b82f6; }
-      100% { color: #10b981; }
+    0%   { color: #6b7280; }
+    50%  { color: #3b82f6; }
+    100% { color: #10b981; }
     }
+
   </style>
 
 </body>
