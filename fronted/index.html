@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Simple Chat UI</title>
+  <title>算命機器人</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -11,11 +11,10 @@
   <!-- 白框：固定高度 + flex column -->
   <div class="w-full max-w-xl bg-white shadow-xl rounded-xl p-4 flex flex-col h-[80vh]">
 
-    <h1 class="text-2xl font-bold mb-4 text-gray-800">Chat Demo</h1>
+    <h1 class="text-2xl font-bold mb-4 text-gray-800">算命機器人</h1>
 
     <!-- 聊天區：可滾動 + 自動撐滿 -->
     <div id="chatBox" class="flex-1 overflow-y-auto border rounded-lg p-3 bg-gray-50 space-y-3">
-      <!-- Messages appear here -->
     </div>
 
     <!-- 輸入框：永遠黏在底部 -->
@@ -33,7 +32,7 @@
 
   </div>
 
-  <!-- Script 放在 body 最底部，避免抓不到元素 -->
+  <!-- Script 放在 body 最底部 -->
   <script>
     const chatBox = document.getElementById("chatBox");
     const userInput = document.getElementById("userInput");
@@ -52,6 +51,24 @@
 
       chatBox.appendChild(bubble);
       chatBox.scrollTop = chatBox.scrollHeight;
+
+      return bubble;
+    }
+
+    // 🔥 打字機效果
+    function typeWriterEffect(targetElement, text, speed = 30) {
+      targetElement.innerHTML = ""; // 清空
+
+      let i = 0;
+      function type() {
+        if (i < text.length) {
+          targetElement.innerHTML += text[i];
+          i++;
+          chatBox.scrollTop = chatBox.scrollHeight;
+          setTimeout(type, speed);
+        }
+      }
+      type();
     }
 
     async function sendMessage() {
@@ -61,14 +78,38 @@
       addMessage(text, "user");
       userInput.value = "";
 
-      const response = await fetch("http://127.0.0.1:5000/api/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text })
-      });
+      // 🔥 波浪 loading
+      const loadingBubble = addMessage(
+        `<span class="wave">
+            <span>正</span><span>在</span><span>查</span><span>詢</span><span>中</span><span>.</span><span>.</span><span>.</span>
+         </span>`,
+        "bot"
+      );
 
-      const data = await response.json();
-      addMessage(data.result.join("<br>"), "bot");
+      try {
+        const response = await fetch("http://127.0.0.1:5000/api/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        const data = await response.json();
+
+        // 移除 loading
+        loadingBubble.remove();
+
+        // 建立空泡泡，準備打字效果
+        const botBubble = addMessage("", "bot");
+        const innerDiv = botBubble.querySelector("div");
+
+        // 🔥 打字效果（支援 <br>，因為我們逐字塞 innerHTML）
+        typeWriterEffect(innerDiv, data.result.join("<br>"));
+
+      } catch (err) {
+        console.error(err);
+        loadingBubble.remove();
+        addMessage("發生錯誤，請稍後再試", "bot");
+      }
     }
 
     // Enter 送出訊息
@@ -87,6 +128,37 @@
     }
     .animate-fadeIn {
       animation: fadeIn 0.25s ease-out;
+    }
+
+    /* 🔥 波浪跳動 + 顏色變化 */
+    .wave span {
+      display: inline-block;
+      animation: wave 1.6s infinite ease-in-out, colorchange 2s infinite alternate;
+    }
+
+    /* 每個字依序延遲，形成波浪 */
+    .wave span:nth-child(1) { animation-delay: 0s, 0s; }
+    .wave span:nth-child(2) { animation-delay: 0.1s, 0.1s; }
+    .wave span:nth-child(3) { animation-delay: 0.2s, 0.2s; }
+    .wave span:nth-child(4) { animation-delay: 0.3s, 0.3s; }
+    .wave span:nth-child(5) { animation-delay: 0.4s, 0.4s; }
+    .wave span:nth-child(6) { animation-delay: 0.5s, 0.5s; }
+    .wave span:nth-child(7) { animation-delay: 0.6s, 0.6s; }
+    .wave span:nth-child(8) { animation-delay: 0.7s, 0.7s; }
+
+    /* 🔥 跳動 + 停頓的完整週期 */
+    @keyframes wave {
+      0%   { transform: translateY(0); }
+      25%  { transform: translateY(-6px); }  /* 跳起來 */
+      50%  { transform: translateY(0); }     /* 回到原位 */
+      100% { transform: translateY(0); }     /* 停住不動（等待） */
+    }
+
+    /* 顏色變化 */
+    @keyframes colorchange {
+      0%   { color: #6b7280; }   /* gray-500 */
+      50%  { color: #3b82f6; }   /* blue-500 */
+      100% { color: #10b981; }   /* green-500 */
     }
   </style>
 
