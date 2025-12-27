@@ -6,30 +6,34 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100 flex justify-center py-10">
+<body class="bg-gray-100 flex justify-center py-4">
 
-  <div class="w-full max-w-xl bg-white shadow-xl rounded-xl p-6">
+  <!-- 白框：固定高度 + flex column -->
+  <div class="w-full max-w-xl bg-white shadow-xl rounded-xl p-4 flex flex-col h-[80vh]">
+
     <h1 class="text-2xl font-bold mb-4 text-gray-800">Chat Demo</h1>
 
-    <!-- Display Area -->
-    <div id="chatBox" class="h-80 overflow-y-auto border rounded-lg p-4 bg-gray-50 space-y-3">
-      <!-- Messages will appear here -->
+    <!-- 聊天區：可滾動 + 自動撐滿 -->
+    <div id="chatBox" class="flex-1 overflow-y-auto border rounded-lg p-3 bg-gray-50 space-y-3">
+      <!-- Messages appear here -->
     </div>
 
-    <!-- Input Area -->
+    <!-- 輸入框：永遠黏在底部 -->
     <div class="mt-4 flex gap-2">
-      <input id="userInput" 
-             type="text" 
-             placeholder="Type something..." 
+      <input id="userInput"
+             type="text"
+             placeholder="Type something..."
              class="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
-      
+
       <button onclick="sendMessage()"
               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
         Send
       </button>
     </div>
+
   </div>
 
+  <!-- Script 放在 body 最底部，避免抓不到元素 -->
   <script>
     const chatBox = document.getElementById("chatBox");
     const userInput = document.getElementById("userInput");
@@ -57,20 +61,23 @@
       addMessage(text, "user");
       userInput.value = "";
 
-      // 🔥 Call backend API
       const response = await fetch("http://127.0.0.1:5000/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            text: text   // 只送使用者輸入
-        })
-    });
+        body: JSON.stringify({ text })
+      });
 
       const data = await response.json();
-
-      // 🔥 Display crawler result
       addMessage(data.result.join("<br>"), "bot");
     }
+
+    // Enter 送出訊息
+    userInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
   </script>
 
   <style>
