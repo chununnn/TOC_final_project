@@ -168,6 +168,35 @@
         sendMessage();
       }
     });
+    function showFortuneButton() {
+        const btn = document.createElement("button");
+        btn.innerText = "🥠 幸運餅乾";
+        btn.className =
+            "mt-3 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition";
+
+        btn.onclick = function () {
+            // 你想要按下後送出的訊息
+            userInput.value = "給我一個幸運餅乾";
+            sendMessage();
+            btn.remove(); // 按下後移除按鈕（避免重複）
+        };
+
+        chatBox.appendChild(btn);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    window.onload = function () {
+    const introBubble = addMessage("", "bot");
+    const innerDiv = introBubble.querySelector("div");
+
+    typeWriterEffect(innerDiv, "嗨，我是你的算命機器人！請輸入你的問題，我會盡力為你解析。", 25);
+
+    // 等打字動畫結束後顯示按鈕
+    setTimeout(() => {
+        showFortuneButton();
+    }, 2000); // 依照你的打字速度調整
+    };
+
+
   </script>
 
   <style>
