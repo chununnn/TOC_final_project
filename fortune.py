@@ -31,7 +31,22 @@ def chat():
             result2 = selectWeb("name", [str(info["Last_name"]), str(info["First_name"])])
 
             summary = u.summarize_fortune(" ".join(result1), " ".join(result2))
-            return jsonify({"result": [summary]})
+            final_output = [
+                f"{reply}",
+                "--------------------------------",
+                "🔮 【大師開示與總結】 🔮\n",
+                "",
+                f"{summary}", 
+                "",
+                "--------------------------------",
+                "🕯️ 占卜結束，天機已定。\n",
+                "👋 「下一位緣主請進！」\n",
+                "💡 (現在您可以直接輸入新的名字與生日，為下一位進行占卜)"
+            ]
+            
+            u.reset_info()
+
+            return jsonify({"result": [final_output]})
         
         else:
             return jsonify({"result": [reply]})

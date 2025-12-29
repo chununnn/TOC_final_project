@@ -23,7 +23,8 @@ class User:
                             (若資訊未知則填 null，不加引號)
                             4. 一但獲得相關資訊，請立即更新 JSON 內容。
                             5. 若使用者糾正資訊，請立即更新 JSON 內容。
-                            6. 禁止占卜，你只負責收集這五項資料。"""
+                            6. 禁止占卜，你只負責收集這五項資料。
+                            7. 非常重要！！！若已獲得全部資料，無需確認，只需要感謝使用者提供資訊。"""
                         }]
 
     def get_info(self, user_input):
@@ -52,10 +53,6 @@ class User:
                 })
                 
                 self.update_info(result['message']['content'])
-
-                print("AI 回覆：", result['message']['content'].split('DATA:')[0].strip())
-                print(f"姓氏：{self.user_info['Last_name']}, 大名：{self.user_info['First_name']}")
-                print(f"生日：{self.user_info['Birth_year']}/{self.user_info['Birth_month']}/{self.user_info['Birth_day']}")
 
             else:
                 return f"error: {response.status_code}, {response.text}"
@@ -102,6 +99,13 @@ class User:
             except json.JSONDecodeError:
                 pass
 
+    def reset_info(self):
+        self.user_info = {
+            "Birth_year": None, "Birth_month": None, "Birth_day": None, 
+            "First_name": None, "Last_name": None
+        }
+        self.history = [self.history[0]]
+
     def summarize_fortune(self, constellation_data, name_data):
         summary_prompt = f"""
         使用者資料如下：
@@ -117,12 +121,17 @@ class User:
         - 語氣溫柔且專業。
         - 結合星座與姓名的特點，給使用者一段鼓勵的話。
         - 不要直接條列原文，請用你自己的話重新統整。
+        - 說話要有禪意。
         """
 
         payload = {
             "model": "gemma3:4b",
             "messages": [{"role": "user", "content": summary_prompt}],
-            "stream": False
+            "stream": False,
+            "options": {
+            "temperature": 0.8,
+            "top_p": 0.9
+            }
         }
         headers = {"Authorization": f"Bearer {self.KEY}"}
         
