@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import StaleElementReferenceException
 from time import sleep
 
 
@@ -50,12 +51,15 @@ def run(parameters : list):
             EC.presence_of_element_located((By.CLASS_NAME, "c_1"))
         )
 
-        # 重新抓所有 c_1，取最後一個
-        blocks = driver.find_elements(By.CLASS_NAME, "c_1")
-        second_block = blocks[1]
+        for _ in range(3):
+            try:
+                blocks = driver.find_elements(By.CLASS_NAME, "c_1")
+                second_block = blocks[1]
+                children = second_block.find_elements(By.XPATH, "./div")
+                break
+            except StaleElementReferenceException:
+                time.sleep(0.2)
 
-        
-        children = second_block.find_elements(By.XPATH, "./div")
 
         result = []
 
