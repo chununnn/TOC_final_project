@@ -14,7 +14,11 @@ py -m pip install flask
 py -m pip install flask-cors
 
 ```
-## Example Usage (Crawler Module)
+## Usage
+Run fortune.py.
+Open index.html which you can find in "fronted".
+
+## Crawler Module Usage
 Below is an example showing how to use the dispatcher to call different crawler modules:
 ```bash
 
